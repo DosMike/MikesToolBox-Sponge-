@@ -153,12 +153,27 @@ public class BoxItem {
 	}
 	
 	/** deep compare if items are equal. this takes all NBTs in account, excluding stack size */
-	public static final boolean equalsIgnoreSize(ItemStack a, ItemStack b) {
+	public static boolean equalsIgnoreSize(ItemStack a, ItemStack b) {
 		if (a==null && b==null) return true;
 		if (a==null || b==null) return false;
 		
 		DataContainer dca = a.toContainer();
 		DataContainer dcb = b.toContainer();
+		
+		return equalsIgnoreSize(dca, dcb);
+	}
+	/** deep compare if items are equal. this takes all NBTs in account, excluding stack size */
+	public static boolean equalsIgnoreSize(ItemStackSnapshot a, ItemStackSnapshot b) {
+		if (a==null && b==null) return true;
+		if (a==null || b==null) return false;
+		
+		DataContainer dca = a.toContainer();
+		DataContainer dcb = b.toContainer();
+
+		return equalsIgnoreSize(dca, dcb);
+	}
+	/** deep compare if items are equal. this takes all NBTs in account, excluding stack size */
+	private static boolean equalsIgnoreSize(DataContainer dca, DataContainer dcb) {
 		dca.remove(DataQuery.of("Count"));
 		dcb.remove(DataQuery.of("Count"));
 		

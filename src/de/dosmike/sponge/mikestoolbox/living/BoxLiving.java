@@ -2,11 +2,15 @@ package de.dosmike.sponge.mikestoolbox.living;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.spongepowered.api.data.DataQuery;
+import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.Living;
@@ -136,6 +140,19 @@ public class BoxLiving {
 			for (EffectHolder fx : efx) if (fx.fx.getClass().equals(effect)) return true;
 			return false;
 		}
+	}
+	
+	public static Optional<Double> getMovementSpeed(Living entity) {
+		if (entity.supports(Keys.WALKING_SPEED))
+			return entity.get(Keys.WALKING_SPEED);
+		else { //every living has attributes. a shared attribute is Attributes.generic.movementSpeed
+			Optional<List<DataView>> children = entity.toContainer().getViewList(DataQuery.of("UnsafeData", "Attributes"));
+			if (children.isPresent()) //if the entity has Attributes
+				for (DataView child : children.get()) //go through the child view list that easily could have been a map<String, Object>
+					if ("generic.movementSpeed".equals(child.getString(DataQuery.of("Name")).orElse(null))) //value match on ListDataView->ChildDataView["Name"]->String
+						return child.getDouble(DataQuery.of("Base")); //the data is in ListDataView->ChildDataView["Base"]->Double
+		}
+		return Optional.empty();
 	}
 
 	

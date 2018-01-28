@@ -1,8 +1,11 @@
 package de.dosmike.sponge.mikestoolbox.zone;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -13,6 +16,8 @@ import org.spongepowered.api.effect.Viewer;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.Event;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.Tristate;
@@ -26,6 +31,7 @@ import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 
 import de.dosmike.sponge.mikestoolbox.tracer.BoxTracer;
+import de.dosmike.sponge.mikestoolbox.zone.BoxZones.EventManipulator;
 
 public class MultiRangeZone implements Zone {
 	
@@ -64,10 +70,27 @@ public class MultiRangeZone implements Zone {
 	UUID id;
 	Set<Range> ranges;
 	int priority;
+	PluginContainer plugin;
 	
-	private MultiRangeZone() {
+	private MultiRangeZone(PluginContainer plugin) {
 		permission = new HashSet<>();
 		ranges = new HashSet<>();
+		this.plugin = plugin;
+	}
+	@Override
+	public PluginContainer getPlugin() {
+		return plugin;
+	}
+
+	private Map<Class<?>, Collection<EventManipulator<?>>> manipulators = new HashMap<>();
+	@SuppressWarnings("unchecked")
+	public <E extends Event> Collection<EventManipulator<E>> getEventManipulators(Class<E> event) {
+		List<EventManipulator<E>> collected = new LinkedList<>();
+		manipulators.entrySet().stream()
+				.filter(e->e.getKey().isAssignableFrom(event))
+				.map(Map.Entry::getValue)
+				.forEach(c->collected.addAll((Collection<? extends EventManipulator<E>>) c));
+		return collected;
 	}
 	
 	@Override
@@ -192,28 +215,31 @@ public class MultiRangeZone implements Zone {
 	}
 	@Override
 	public void trace(Viewer v, Entity highlight, BoxTracer inactive, BoxTracer active, BoxTracer targetRange) {
-		if (!isInside(highlight))
+		if (!isInside(highlight)) {
 			for (Range r : ranges) 
 				r.trace(v, inactive);
-		else 
+		} else { 
 			for (Range r : ranges) 
 				r.trace(v, r.isInside(highlight)?targetRange:active);
+		}
 	}
 	
 	public static class Builder {
-		MultiRangeZone result = new MultiRangeZone();
+		MultiRangeZone result;
 		Extent extent;
 		
-		private Builder(Extent extent) {
+		private Builder(PluginContainer plugin, Extent extent) {
+			result = new MultiRangeZone(plugin);
 			result.id = UUID.randomUUID();
 			result.priority=0;
+			this.extent = extent;
 		}
 		public Builder addPermission(String permission) {
 			result.permission.add(permission);
 			return this;
 		}
 		public Builder addRange(Range range) {
-			assert range.context.equals(extent): "Range in different Extent";
+			assert range.context.equals(extent.getUniqueId()): "Range in different Extent";
 			result.ranges.add(range);
 			return this;
 		}
@@ -230,11 +256,33 @@ public class MultiRangeZone implements Zone {
 			result.priority = priority;
 			return this;
 		}
+		public <E extends Event> Builder addManipulator(Class<E> clz, EventManipulator<E> manipulator) {
+			Collection<EventManipulator<?>> manips;
+			if (result.manipulators.containsKey(clz)) {
+				manips = result.manipulators.get(clz);
+			} else {
+				manips = new HashSet<>();
+			}
+			manips.add(manipulator);
+			result.manipulators.put(clz, manips);
+			return (Builder) this;
+		}
+		public <E extends Event> Builder addManipulators(Class<E> clz, Collection<EventManipulator<E>> list) {
+			Collection<EventManipulator<?>> manips;
+			if (result.manipulators.containsKey(clz)) {
+				manips = result.manipulators.get(clz);
+			} else {
+				manips = new HashSet<>();
+			}
+			manips.addAll(list);
+			result.manipulators.put(clz, manips);
+			return (Builder) this;
+		}
 		public MultiRangeZone build() {
 			return result;
 		}
 	}
-	public static Builder builder(Extent extent) {
-		return new Builder(extent);
+	public static Builder builder(PluginContainer plugin, Extent extent) {
+		return new Builder(plugin, extent);
 	}
 }

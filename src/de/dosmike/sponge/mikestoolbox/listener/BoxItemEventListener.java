@@ -2,6 +2,7 @@ package de.dosmike.sponge.mikestoolbox.listener;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.type.HandTypes;
+import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.EventManager;
@@ -13,6 +14,7 @@ import org.spongepowered.api.event.item.inventory.DropItemEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 
 import de.dosmike.sponge.mikestoolbox.BoxLoader;
@@ -27,26 +29,32 @@ public class BoxItemEventListener {
 	@Listener
 	public void onAnything(Event event) {
 		try {
-		event.getCause().first(Player.class).ifPresent(player->{
-			player.getItemInHand(HandTypes.MAIN_HAND).ifPresent(item->{
-				BoxItem.fromItem(item).ifPresent(bitem->{
-					bitem.getEventManipulators(event.getClass()).forEach(manip->{
-						anyHandler(event, manip, bitem, item);
+			event.getCause().first(Player.class).ifPresent(player->{
+				player.getItemInHand(HandTypes.MAIN_HAND).ifPresent(item->{
+					BoxItem.fromItem(item).ifPresent(bitem->{
+						bitem.getEventManipulators(event.getClass()).forEach(manip->{
+							anyItemHandler(event, manip, bitem, item);
+						});
+					});
+				});
+				player.getItemInHand(HandTypes.OFF_HAND).ifPresent(item->{
+					BoxItem.fromItem(item).ifPresent(bitem->{
+						bitem.getEventManipulators(event.getClass()).forEach(manip->{
+							anyItemHandler(event, manip, bitem, item);
+						});
 					});
 				});
 			});
-			player.getItemInHand(HandTypes.OFF_HAND).ifPresent(item->{
-				BoxItem.fromItem(item).ifPresent(bitem->{
-					bitem.getEventManipulators(event.getClass()).forEach(manip->{
-						anyHandler(event, manip, bitem, item);
-					});
-				});
+			event.getCause().first(Entity.class).ifPresent(entity->{
+				BoxLoader.getZoneService().notifyEventManipulators(event, entity);
 			});
-		});
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			BoxLoader.w("onAnything : %s. You might want to exclude %s", e.getMessage(), event.getClass().getSimpleName());
+			e.printStackTrace();
+		}
 	}
 	@SuppressWarnings("unchecked")
-	private static <E extends Event> void anyHandler(Event e, EventManipulator<E> m, BoxItem b, ItemStack h) {
+	private static <E extends Event> void anyItemHandler(Event e, EventManipulator<E> m, BoxItem b, ItemStack h) {
 		m.manipulate((E) e, b, h);
 	}
 	
@@ -66,7 +74,8 @@ public class BoxItemEventListener {
 		event.getDroppedItems().forEach((item)->{
 			//BoxLoader.l("Player dropped %d %s", item.getQuantity(), item.getType().getTranslation().get());
 			int more = 0;
-			for (Inventory slot : holder.getInventory().queryAny(item.createStack()).slots()) more+=slot.totalItems();
+			for (Inventory slot : holder.getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(item.createStack())).slots())
+				more+=slot.totalItems();
 			
 			manager.post(new BoxPlayerItemEvent(holder, item, more==0?Action.LOOSEALL:Action.LOOSE, more));
 		});
@@ -101,14 +110,16 @@ public class BoxItemEventListener {
 					if (fromInv != null && !fromInv.getType().equals(ItemTypes.AIR)) {
 						//BoxLoader.l("Player dropped %d %s", fromInv.getQuantity(), fromInv.getType().getTranslation().get());
 						int more = 0;
-						for (Inventory slot : holder.getInventory().queryAny(fromInv).slots()) more+=slot.totalItems();
+						for (Inventory slot : holder.getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(fromInv)).slots())
+							more+=slot.totalItems();
 						
 						manager.post(new BoxPlayerItemEvent(holder, fromInv.createSnapshot(), more==0?Action.LOOSEALL:Action.LOOSE, more));
 					}
 					if (toInv != null && !toInv.getType().equals(ItemTypes.AIR)) {
 						//BoxLoader.l("Player picked up %d %s", toInv.getQuantity(), toInv.getType().getTranslation().get());
 						int more = 0;
-						for (Inventory slot : holder.getInventory().queryAny(toInv).slots()) more+=slot.totalItems();
+						for (Inventory slot : holder.getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(toInv)).slots())
+							more+=slot.totalItems();
 						
 						manager.post(new BoxPlayerItemEvent(holder, toInv.createSnapshot(), Action.GET, more));
 					}
@@ -119,6 +130,8 @@ public class BoxItemEventListener {
 	
 	@Listener
 	public void onBoxPlayerItemEvent(BoxPlayerItemEvent event) {
+		event.getBoxItem().ifPresent((bitem)->
+		BoxLoader.l("Box Item Event: %s %s", event.getAction().toString(), bitem.getBoxId()) );
 		event.getBoxItem().ifPresent((item)->{
 			switch (event.getAction()) {
 			case GET:
