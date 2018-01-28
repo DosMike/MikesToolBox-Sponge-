@@ -6,15 +6,22 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataQuery;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Event;
+import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 
+import de.dosmike.sponge.mikestoolbox.event.BoxPlayerItemEvent;
+import de.dosmike.sponge.mikestoolbox.event.BoxPlayerItemEvent.Action;
 import de.dosmike.sponge.mikestoolbox.living.CustomEffect;
 
 public class BoxItem {
@@ -190,5 +197,25 @@ public class BoxItem {
 			if (!dca.get(q).get().equals(dcb.get(q).get())) return false;
 		}
 		return true;
+	}
+	
+	/** reapply all item custom effects.<br>
+	 * <b>This does not remove existing effects!</b> */
+	public static void rescanInventory(Player entity) {
+		Map<BoxItem, Integer> itemCounter = new HashMap<>();
+		for (Inventory slot : entity.getInventory().slots()) {
+			if (!slot.peek().isPresent()) continue;
+			ItemStack item = slot.peek().get();
+			if (item.getQuantity()<1 || item.getType().equals(ItemTypes.AIR)) continue; //sometimes there's more that 0 air in a slot resulting in the slot not being isEmpty() 
+			Optional<BoxItem> bitem = BoxItem.fromItem(item);
+			if (!bitem.isPresent()) continue;
+			if (BoxItem.equalsIgnoreSize(bitem.get().item(), item.createSnapshot())) {
+				//count how many of this box item is in this slot
+				itemCounter.put(bitem.get(), (itemCounter.containsKey(bitem.get())? itemCounter.get(bitem.get()):0) + item.getQuantity()); 
+			}
+		}
+		for (Entry<BoxItem, Integer> entry : itemCounter.entrySet()) {
+			Sponge.getEventManager().post(new BoxPlayerItemEvent(entity, entry.getKey().item(), Action.GET, entry.getValue()));
+		}
 	}
 }

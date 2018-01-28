@@ -71,6 +71,11 @@ public class MultiRangeZone implements Zone {
 	Set<Range> ranges;
 	int priority;
 	PluginContainer plugin;
+	String name = null;
+	@Override
+	public Optional<String> getName() {
+		return Optional.ofNullable(name);
+	}
 	
 	private MultiRangeZone(PluginContainer plugin) {
 		permission = new HashSet<>();
@@ -250,6 +255,10 @@ public class MultiRangeZone implements Zone {
 		/** this method is only required for deserialization, a id should already be set */
 		public Builder setUUID(UUID id) {
 			result.id = id;
+			return this;
+		}
+		public Builder setName(String name) {
+			result.name = name;
 			return this;
 		}
 		public Builder setPriority(int priority) {

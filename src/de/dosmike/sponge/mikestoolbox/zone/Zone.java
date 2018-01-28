@@ -34,6 +34,8 @@ public interface Zone extends Comparable<Zone>{
 	
 	/** get this zones unique ID */
 	UUID getID();
+	/** If you feel like assigning names to zones you can overwrite this method */
+	default Optional<String> getName() { return Optional.empty(); }
 	
 	/** returns whether this living is allowed to enter the zone or not */
 	boolean hasPermission(Living e);

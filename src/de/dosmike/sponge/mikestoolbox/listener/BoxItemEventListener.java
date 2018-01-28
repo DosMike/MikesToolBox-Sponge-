@@ -8,9 +8,11 @@ import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.EventManager;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.EventContextKeys;
+import org.spongepowered.api.event.entity.living.humanoid.player.RespawnPlayerEvent;
 import org.spongepowered.api.event.item.inventory.ChangeInventoryEvent;
 import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.DropItemEvent;
+import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.ItemStack;
@@ -23,11 +25,20 @@ import de.dosmike.sponge.mikestoolbox.event.BoxPlayerItemEvent.Action;
 import de.dosmike.sponge.mikestoolbox.item.BoxItem;
 import de.dosmike.sponge.mikestoolbox.item.BoxItem.EventManipulator;
 import de.dosmike.sponge.mikestoolbox.living.BoxLiving;
+import de.dosmike.sponge.mikestoolbox.living.BoxPlayer;
+import de.dosmike.sponge.mikestoolbox.living.CustomEffect;
 
 public class BoxItemEventListener {
 
 	@Listener
 	public void onAnything(Event event) {
+		//to find new events / see what events are implemented
+//		if (!(event instanceof MoveEntityEvent || event instanceof ChangeStatisticEvent || 
+//				event instanceof UnloadChunkEvent || event instanceof LoadChunkEvent ||
+//				event instanceof SaveWorldEvent || event instanceof CollideBlockEvent ||
+//				event instanceof ChannelRegistrationEvent)) {
+//			BoxLoader.l("%s: %s", event.getClass().getSimpleName(), event.getCause().toString());
+//		}
 		try {
 			event.getCause().first(Player.class).ifPresent(player->{
 				player.getItemInHand(HandTypes.MAIN_HAND).ifPresent(item->{
@@ -81,6 +92,8 @@ public class BoxItemEventListener {
 		});
 	}
 	
+	//ChangeInventoryEvent.Held
+	
 	/** this listener is responsible for multiple events tracking wether an item enters or leaves the player inventory */
 	@Listener
 	public void ItemMoveListener(ChangeInventoryEvent event) {
@@ -111,7 +124,8 @@ public class BoxItemEventListener {
 						//BoxLoader.l("Player dropped %d %s", fromInv.getQuantity(), fromInv.getType().getTranslation().get());
 						int more = 0;
 						for (Inventory slot : holder.getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(fromInv)).slots())
-							more+=slot.totalItems();
+							if (BoxItem.equalsIgnoreSize(slot.peek().orElse(null), fromInv)) //needs to be a box item, query only checks for itemtype
+								more+=slot.totalItems();
 						
 						manager.post(new BoxPlayerItemEvent(holder, fromInv.createSnapshot(), more==0?Action.LOOSEALL:Action.LOOSE, more));
 					}
@@ -119,7 +133,8 @@ public class BoxItemEventListener {
 						//BoxLoader.l("Player picked up %d %s", toInv.getQuantity(), toInv.getType().getTranslation().get());
 						int more = 0;
 						for (Inventory slot : holder.getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(toInv)).slots())
-							more+=slot.totalItems();
+							if (BoxItem.equalsIgnoreSize(slot.peek().orElse(null), toInv)) //needs to be a box item, query only checks for itemtype
+								more+=slot.totalItems();
 						
 						manager.post(new BoxPlayerItemEvent(holder, toInv.createSnapshot(), Action.GET, more));
 					}
@@ -128,10 +143,50 @@ public class BoxItemEventListener {
 		});
 	}
 	
+	//not yet working
+//	@Listener
+//	public void onChangeEquipment(ChangeEntityEquipmentEvent.TargetPlayer event) {
+//		if (event.getOriginalItemStack().isPresent() && !event.getOriginalItemStack().get().getType().equals(ItemTypes.AIR)) {
+//			Optional<BoxItem> bitem = BoxItem.fromItem(event.getOriginalItemStack().get());
+//			if (bitem.isPresent()) {
+//				int more = 0;
+//				ItemStack sstack = event.getOriginalItemStack().get().createStack();
+//				for (Inventory slot : event.getTargetEntity().getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(sstack)).slots())
+//					if (BoxItem.equalsIgnoreSize(slot.peek().orElse(null), sstack)) //needs to be a box item, query only checks for itemtype
+//						more+=slot.totalItems();
+//				Sponge.getEventManager().post(new BoxPlayerItemEvent(event.getTargetEntity(), event.getOriginalItemStack().get(), Action.UNEQUIP, more));
+//			}
+//		}
+//		if (event.getItemStack().isPresent()) {
+//			ItemStackSnapshot item = event.getItemStack().get().getFinal();
+//			if (!item.getType().equals(ItemTypes.AIR)) {
+//				Optional<BoxItem> bitem = BoxItem.fromItem(item);
+//				if (bitem.isPresent()) {
+//					int more = 0;
+//					ItemStack sstack = event.getOriginalItemStack().get().createStack();
+//					for (Inventory slot : event.getTargetEntity().getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(sstack)).slots())
+//						if (BoxItem.equalsIgnoreSize(slot.peek().orElse(null), sstack)) //needs to be a box item, query only checks for itemtype
+//							more+=slot.totalItems();
+//					Sponge.getEventManager().post(new BoxPlayerItemEvent(event.getTargetEntity(), event.getOriginalItemStack().get(), Action.EQUIP, more));
+//				}
+//			}
+//		}
+//	}
+	
+	@Listener
+	public void onPlayerSpawned(RespawnPlayerEvent event) {
+		//TODO do effects have to be removed first?
+		BoxPlayer.removeCustomEffect(event.getTargetEntity(), CustomEffect.class);
+		BoxItem.rescanInventory(event.getTargetEntity());
+	}
+	
+	@Listener
+	public void onPlayerFullyConnected(ClientConnectionEvent.Join event) {
+		BoxItem.rescanInventory(event.getTargetEntity());
+	}
+	
 	@Listener
 	public void onBoxPlayerItemEvent(BoxPlayerItemEvent event) {
-		event.getBoxItem().ifPresent((bitem)->
-		BoxLoader.l("Box Item Event: %s %s", event.getAction().toString(), bitem.getBoxId()) );
 		event.getBoxItem().ifPresent((item)->{
 			switch (event.getAction()) {
 			case GET:
@@ -141,6 +196,16 @@ public class BoxItemEventListener {
 				break;
 			case LOOSEALL:
 				item.getPassives().forEach((fx)->{
+					BoxLiving.removeCustomEffect(event.getTargetEntity(), fx.getClass());
+				});
+				break;
+			case EQUIP:
+				item.getActives().forEach((fx)->{
+					BoxLiving.addCustomEffect(event.getTargetEntity(), fx);
+				});
+				break;
+			case UNEQUIP:
+				item.getActives().forEach((fx)->{
 					BoxLiving.removeCustomEffect(event.getTargetEntity(), fx.getClass());
 				});
 				break;
