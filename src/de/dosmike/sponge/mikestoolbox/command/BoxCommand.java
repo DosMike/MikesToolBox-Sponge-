@@ -19,6 +19,14 @@ import de.dosmike.sponge.mikestoolbox.exception.ArgumentBuilderException;
 
 /** Command toolbox to more easily bild args from a description string */
 public class BoxCommand {
+	/** Use like this: <pre>BoxCommand.registerCommand(
+	 *     "sendMessage &lt;Player> &lt;Message{RemainingString}>",
+	 *     "plugin.group.permission", 
+	 *     (src, args)->{});</pre>
+	 * @param command is the command as presented by /help including the command name itself, but not the command prefix '/'
+	 * @param permission the base permission for this command
+	 * @param executor the {@link CommandExecutor} to handle this command and arguments
+	 * @return the {@link CommandSpec.Builder} that you may use for further building */
 	public static void registerCommand(String command, String permission, CommandExecutor executor) {
 		if (command.indexOf(' ')<0) {
 			Sponge.getCommandManager().register(BoxLoader.getBoxLoader(), CommandSpec.builder().permission(permission).executor(executor).build(), command);
@@ -29,6 +37,18 @@ public class BoxCommand {
 			spec.executor(executor).arguments(parseArgs(command.substring(command.indexOf(' ')+1)));
 			Sponge.getCommandManager().register(BoxLoader.getBoxLoader(), spec.build(), name);
 		}
+	}
+	/** Use like this: <pre>Sponge.getCommandManager().register(myPlugin, 
+	 *     BoxCommand.parseArguments("&lt;Player> &lt;Message{RemainingString}>")
+	 *               .permission("plugin.group.permission")
+	 *               .executor((src, args)->{})
+	 *               .build(),
+	 *     "sendMessage");</pre>
+	 * @param argumentString is the command as presented by /help WITHOUT the command name itself!
+	 * @return the {@link CommandSpec.Builder} that you may use for further building */
+	public static CommandSpec.Builder parseArguments(String argumentString) {
+			CommandSpec.Builder spec = CommandSpec.builder();
+			return spec.arguments(parseArgs(argumentString));
 	}
 	
 	private static Pattern argFinder = Pattern.compile("((?:<.+?>)|(?:\\[.+?\\])|(?:-(?:(?:-\\w+)|\\w)(?: [^ -]+)?))"); //each match is a flag or argument 
