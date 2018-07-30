@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.jar.JarFile;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
@@ -68,6 +70,15 @@ public class BoxLoader {
 		if (event.getService().equals(ZoneService.class)) {
 			zoneService = (ZoneService)event.getNewProvider();
 		}
+	}
+	
+	@Inject
+	@ConfigDir(sharedRoot = false)
+	private Path privateConfigDir;
+	public Path getPrivateConfigDir() {
+		File d = privateConfigDir.toFile();
+		if (!d.exists()) d.mkdirs(); //sponge sais the folders are created, but i have yet to see that happen. until then I'll manually check that
+		return privateConfigDir;
 	}
 	
 	@Listener

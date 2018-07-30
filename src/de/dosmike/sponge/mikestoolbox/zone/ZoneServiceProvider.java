@@ -1,5 +1,6 @@
 package de.dosmike.sponge.mikestoolbox.zone;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,9 +22,17 @@ import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import com.google.common.reflect.TypeToken;
+
+import de.dosmike.sponge.mikestoolbox.BoxLoader;
 import de.dosmike.sponge.mikestoolbox.event.BoxZoneEvent;
 import de.dosmike.sponge.mikestoolbox.service.ZoneService;
 import de.dosmike.sponge.mikestoolbox.zone.BoxZones.EventManipulator;
+import ninja.leaping.configurate.ConfigurationOptions;
+import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import ninja.leaping.configurate.loader.ConfigurationLoader;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 public class ZoneServiceProvider implements ZoneService {
 
@@ -39,6 +48,7 @@ public class ZoneServiceProvider implements ZoneService {
 	@Override
 	public void addZone(Zone z) {
 		zones.add(z);
+		writeZones();
 	}
 
 	@Override
@@ -48,6 +58,7 @@ public class ZoneServiceProvider implements ZoneService {
 			if (del) status.remove(zone.getID());
 			return del;
 		});
+		writeZones();
 	}
 
 	@Override
@@ -57,12 +68,14 @@ public class ZoneServiceProvider implements ZoneService {
 			if (del) status.remove(zone.getID());
 			return del;
 		});
+		writeZones();
 	}
 
 	@Override
 	public void removeZone(UUID zoneid) {
 		zones.removeIf(zone->zone.getID().equals(zoneid));
 		status.remove(zoneid);
+		writeZones();
 	}
 
 	@Override
@@ -194,4 +207,50 @@ public class ZoneServiceProvider implements ZoneService {
 	private static <E extends Event> void anyZoneHandler(Event e, EventManipulator<E> m, Zone z) {
 		m.manipulate((E) e, z);
 	}
+	
+	public ZoneServiceProvider() {
+		cl = HoconConfigurationLoader.builder()
+				.setPath(BoxLoader.getBoxLoader().getPrivateConfigDir().resolve("BoxZones.conf"))
+				.build();
+		
+		readZones();
+	}
+	
+	private static ConfigurationLoader<CommentedConfigurationNode> cl;
+	
+	private void writeZones() {
+		ConfigurationOptions options = BoxZones.getConfigurationOptions();
+		CommentedConfigurationNode root = cl.createEmptyNode(options);
+		try {
+			for (Zone z : zones) {
+				CommentedConfigurationNode e = root.getNode(z.getID().toString());
+				w(e, TypeToken.of(z.getClass()), z);
+			}
+			cl.save(root);
+		} catch (IOException | ObjectMappingException e) {
+			e.printStackTrace();
+		}
+	}
+	@SuppressWarnings("unchecked")
+	private <T extends Zone> void w(CommentedConfigurationNode n, TypeToken<? extends Zone> t, Zone v) throws ObjectMappingException {
+		n.setValue((TypeToken<T>)t, (T)v);
+		n.setComment(v.getClass().getCanonicalName());
+	}
+	
+	private void readZones() {
+		ConfigurationOptions options = BoxZones.getConfigurationOptions();
+		try {
+			zones.clear();
+			CommentedConfigurationNode root = cl.load(options);
+			for (CommentedConfigurationNode n : root.getChildrenMap().values()) {
+				TypeToken<?> t = TypeToken.of(Class.forName(n.getComment().get().trim()));
+				zones.add((Zone) n.getValue(t));
+			}
+		} catch (ObjectMappingException | IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			BoxLoader.w("Unable to load a zone, plugin seems to be missin (%s)", e.getMessage());
+		}
+	}
+	
 }

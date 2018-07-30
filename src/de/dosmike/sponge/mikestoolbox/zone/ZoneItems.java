@@ -31,6 +31,7 @@ public class ZoneItems {
 	public static final BoxItem WAND;
 	
 	static Map<UUID, Location<World>> mark1 = new HashMap<>();
+	static Map<UUID, Location<World>> mark2 = new HashMap<>();
 	static Map<UUID, MultiRangeZone.Builder> boundBuilder = new HashMap<>();
 	
 	private static void TraceBlock(Viewer v, Vector3i at, boolean redNotGreen) {
@@ -74,8 +75,9 @@ public class ZoneItems {
 			public void onRemove(Living entity) {
 				if (!(entity instanceof Player)) return;
 				Player p = ((Player)entity);
-				if (mark1.containsKey(p.getUniqueId())) {
+				if (mark1.containsKey(p.getUniqueId()) || mark2.containsKey(p.getUniqueId()) || boundBuilder.containsKey(p.getUniqueId())) {
 					mark1.remove(p.getUniqueId());
+					mark2.remove(p.getUniqueId());
 					boundBuilder.remove(p.getUniqueId());
 					
 					p.sendMessage(ChatTypes.ACTION_BAR, Text.of(TextColors.RED, "Selection cancelled"));
@@ -99,25 +101,36 @@ public class ZoneItems {
 						if (event instanceof InteractBlockEvent.Primary) {
 							TraceBlock(p, block.getBlockPosition(), true);
 							
-							boundBuilder.remove(p.getUniqueId());
+							mark2.remove(p.getUniqueId());
 							mark1.put(p.getUniqueId(), block);
 							
 							p.sendMessage(ChatTypes.ACTION_BAR, Text.of("Corner 1: ", block.getBlockPosition().toString()));
 						} else if (event instanceof InteractBlockEvent.Secondary) {
 							if (!mark1.containsKey(p.getUniqueId())) {
 								p.sendMessage(ChatTypes.SYSTEM, Text.of(TextColors.RED, "Please select the other corner first"));
-							} else if (!boundBuilder.containsKey(p.getUniqueId())) {
+							} else if (!block.equals(mark2.get(p.getUniqueId()))) { //if no mark2 exists yet .equals(null) will return false
 								TraceBlock(p, block.getBlockPosition(), true);
 								
-								MultiRangeZone.Builder mrzb = MultiRangeZone.builder(BoxLoader.getBoxContainer(), block.getExtent())
-										.addRange(mark1.get(p.getUniqueId()).getBlockPosition(), block.getBlockPosition());
-								boundBuilder.put(p.getUniqueId(), mrzb);
-								mark1.put(p.getUniqueId(), block);
+								mark2.put(p.getUniqueId(), block);
 								
 								p.sendMessage(ChatTypes.ACTION_BAR, Text.of("Corner 2: ", block.getBlockPosition().toString()));
-								p.sendMessage(ChatTypes.SYSTEM, Text.of(TextColors.AQUA, "Use /zone build or right click corner 2 again to create the zone"));
+								p.sendMessage(ChatTypes.SYSTEM, Text.of(TextColors.AQUA, "Use click corner 2 again to create the zone, or sneak use click to store the builder add another range"));
 							} else {
-								buildZone(p);
+								MultiRangeZone.Builder mrzb = boundBuilder.containsKey(p.getUniqueId())
+										? boundBuilder.get(p.getUniqueId())
+										: MultiRangeZone.builder(BoxLoader.getBoxContainer(), block.getExtent());
+								
+								mrzb.addRange(mark1.get(p.getUniqueId()).getBlockPosition(), block.getBlockPosition());
+								
+								boundBuilder.put(p.getUniqueId(), mrzb);
+								mark1.remove(p.getUniqueId());
+								mark2.remove(p.getUniqueId());
+								
+								if (!p.get(Keys.IS_SNEAKING).orElse(false)) {
+									buildZone(p);
+								} else {
+									p.sendMessage(ChatTypes.SYSTEM, Text.of("Range added!"));
+								}
 							}
 						}
 						event.setCancelled(true);
@@ -127,7 +140,6 @@ public class ZoneItems {
 	}
 	
 	static void buildZone(Player player) {
-		mark1.remove(player.getUniqueId());
 		if (boundBuilder.containsKey(player.getUniqueId())) {
 			BoxTracer tracer = new BoxTracer(Color.GREEN);
 			MultiRangeZone zone = boundBuilder.get(player.getUniqueId()).build();

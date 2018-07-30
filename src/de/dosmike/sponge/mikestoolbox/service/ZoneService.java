@@ -41,7 +41,7 @@ public interface ZoneService {
 	 * @return a collection of zones sorted by priority */
 	Collection<Zone> getZonesByPlugin(PluginContainer plugin);
 	
-	/** this method gets called on the service from a {@link MoveEntityEvent}-Lintener
+	/** this method gets called on the service from a {@link MoveEntityEvent}-Listener
 	 * and should be used to update a zone cache for a certain entity<br>
 	 * This method receives the whole event, to allow it to perform permission checks 
 	 * and cancel it if necessary<br>
@@ -49,13 +49,14 @@ public interface ZoneService {
 	 * on the event bus and check for cancellations through these events */
 	void notifyEntityMoved(MoveEntityEvent event);
 	
-	/** this method gets called on the service from a {@link DestructEntityEvent}-Lintener
+	/** this method gets called on the service from a {@link DestructEntityEvent}-Listener
 	 * and should be used to update a zone cache for tracked entities */
 	void notifyEntityDestroyed(Entity e);
 	
-	/** This notifier should is supposed to call all event manipulators on all zones the
+	/** This notifier is supposed to call all event manipulators on all zones the
 	 * entity is currently in. This should greatly simplify protections to a degree of adding
 	 * a bunch of {@link EventManipulator}.
 	 */
 	void notifyEventManipulators(Event event, Entity trigger);
+	
 }

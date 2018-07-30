@@ -12,8 +12,12 @@ import org.spongepowered.api.world.extent.Extent;
 
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
+import com.google.common.reflect.TypeToken;
 
 import de.dosmike.sponge.mikestoolbox.tracer.BoxTracer;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
 
 public class Range extends AABB {
 	UUID context=null;
@@ -82,5 +86,25 @@ public class Range extends AABB {
 	 * From getWorld:  */
 	public Optional<World> getExtent() {
 		return Sponge.getServer().getWorld(context);
+	}
+	
+	public static class Serializer implements TypeSerializer<Range> {
+
+		@Override
+		public Range deserialize(TypeToken<?> arg0, ConfigurationNode arg1) throws ObjectMappingException {
+			Vector3i a = arg1.getNode("low").getValue(TypeToken.of(Vector3i.class));
+			Vector3i b = arg1.getNode("high").getValue(TypeToken.of(Vector3i.class));
+			Range ret = new Range(a,b, true);
+			ret.context = UUID.fromString(arg1.getNode("context").getString());
+			return ret;
+		}
+
+		@Override
+		public void serialize(TypeToken<?> arg0, Range arg1, ConfigurationNode arg2) throws ObjectMappingException {
+			arg2.getNode("low").setValue(TypeToken.of(Vector3i.class), arg1.getMin().toInt());
+			arg2.getNode("high").setValue(TypeToken.of(Vector3i.class), arg1.getMax().toInt());
+			arg2.getNode("context").setValue(arg1.context.toString());
+		}
+		
 	}
 }

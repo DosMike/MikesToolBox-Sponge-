@@ -17,10 +17,14 @@ import com.flowpowered.math.vector.Vector3d;
 import de.dosmike.sponge.mikestoolbox.tracer.BoxTracer;
 import de.dosmike.sponge.mikestoolbox.zone.BoxZones.EventManipulator;
 
-public interface Zone extends Comparable<Zone>{
+public interface Zone extends Comparable<Zone> {
 	/** this is for more advanced plugins, that require to manage overlapping zones.
 	 * Usually higher values mean more important */
 	int getPriority();
+	/** method that allows to change the priority of this zone instance.
+	 * If you desire this functionality overwrite the function. */
+	default void setPriority(int priority) {}
+	
 	@Override
 	default public int compareTo(Zone other) {
 		return Integer.compare(getPriority(), other.getPriority());
@@ -36,9 +40,17 @@ public interface Zone extends Comparable<Zone>{
 	UUID getID();
 	/** If you feel like assigning names to zones you can overwrite this method */
 	default Optional<String> getName() { return Optional.empty(); }
+	/** If you want to be able to change zone instance name overwrite this */
+	default void setName(String newName) {};
 	
-	/** returns whether this living is allowed to enter the zone or not */
-	boolean hasPermission(Living e);
+	/** returns whether this living is allowed to enter the zone or not. default implementation returns true */
+	default boolean hasPermission(Living e) { return true; };
+	/** Add a permission to this zone. default implementation is empty */
+	default void addPermission(String permission) {};
+	/** Remove a permission from this zone. default implementation is empty */
+	default void removePermission(String permission) {};
+	/** List all permissions for this zone. default implementation is empty */
+	default String[] listPermission(String newName) {return new String[0];};
 	
 	/** Returns a location for this entity outside this zone.
 	 * The implementation should look for a save location outside the zone to teleport to. 
@@ -58,4 +70,5 @@ public interface Zone extends Comparable<Zone>{
 	 * these are dynamic event listeners only active while the item is held.
 	 * if your zone does not support this, you can always return a empty collection */
 	public <E extends Event> Collection<EventManipulator<E>> getEventManipulators(Class<E> event);
+	
 }

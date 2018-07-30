@@ -29,9 +29,13 @@ import org.spongepowered.api.world.teleport.TeleportHelperFilters;
 
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
+import com.google.common.reflect.TypeToken;
 
 import de.dosmike.sponge.mikestoolbox.tracer.BoxTracer;
 import de.dosmike.sponge.mikestoolbox.zone.BoxZones.EventManipulator;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
 
 public class MultiRangeZone implements Zone {
 	
@@ -75,6 +79,10 @@ public class MultiRangeZone implements Zone {
 	@Override
 	public Optional<String> getName() {
 		return Optional.ofNullable(name);
+	}
+	@Override
+	public void setName(String newName) {
+		name = newName;
 	}
 	
 	private MultiRangeZone(PluginContainer plugin) {
@@ -202,6 +210,18 @@ public class MultiRangeZone implements Zone {
 		return true;
 	}
 	@Override
+	public void addPermission(String newName) {
+		permission.add(newName);
+	}
+	@Override
+	public void removePermission(String newName) {
+		permission.remove(newName);
+	}
+	@Override
+	public String[] listPermission(String newName) {
+		return permission.toArray(new String[0]);
+	}
+	@Override
 	public boolean isInside(Entity e) {
 		for (Range r : ranges)
 			if (r.isInside(e)) return true;
@@ -217,6 +237,10 @@ public class MultiRangeZone implements Zone {
 	@Override
 	public int getPriority() {
 		return priority;
+	}
+	@Override
+	public void setPriority(int priority) {
+		this.priority = priority; 
 	}
 	@Override
 	public void trace(Viewer v, Entity highlight, BoxTracer inactive, BoxTracer active, BoxTracer targetRange) {
@@ -294,4 +318,50 @@ public class MultiRangeZone implements Zone {
 	public static Builder builder(PluginContainer plugin, Extent extent) {
 		return new Builder(plugin, extent);
 	}
+	
+	public static class Serializer implements TypeSerializer<MultiRangeZone> {
+
+		@Override
+		public MultiRangeZone deserialize(TypeToken<?> arg0, ConfigurationNode arg1) throws ObjectMappingException {
+			PluginContainer pc = Sponge.getPluginManager().getPlugin(arg1.getNode("Plugin").getString()).orElseThrow(()->new ObjectMappingException("Plugin not found"));
+			MultiRangeZone ret = new MultiRangeZone(pc);
+			ret.id = UUID.fromString(arg1.getNode("UUID").getString());
+			ret.name = arg1.getNode("Name").getString(null);
+			{
+				List<String> p = arg1.getNode("Permission").getList(TypeToken.of(String.class));
+				ret.permission = new HashSet<>();
+				ret.permission.addAll(p);
+			}
+			ret.priority = arg1.getNode("Priority").getInt(0);
+			{
+				List<Range> r = arg1.getNode("Ranges").getList(TypeToken.of(Range.class));
+				ret.ranges = new HashSet<>();
+				ret.ranges.addAll(r);
+			}
+			return ret;
+		}
+		
+		@Override
+		@SuppressWarnings("serial")
+		public void serialize(TypeToken<?> arg0, MultiRangeZone arg1, ConfigurationNode arg2)
+				throws ObjectMappingException {
+			
+			arg2.getNode("Plugin").setValue(arg1.plugin.getId());
+			arg2.getNode("UUID").setValue(arg1.id.toString());
+			if (arg1.name != null) arg2.getNode("Name").setValue(arg1.name);
+			{
+				List<String> l = new LinkedList<>();
+				l.addAll(arg1.permission);
+				arg2.getNode("Permission").setValue(new TypeToken<List<String>>(){}, l);
+			}
+			arg2.getNode("Priority").setValue(arg1.priority);
+			{
+				List<Range> r = new LinkedList<>();
+				r.addAll(arg1.ranges);
+				arg2.getNode("Ranges").setValue(new TypeToken<List<Range>>(){}, r);
+			}
+		}
+		
+	}
+
 }
