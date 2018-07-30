@@ -25,14 +25,15 @@ So an example would be: `BoxCommand.registerCommand("/teleport [Target{Player:cm
 ### BoxEvents
 
 These are a view events the presort some information that might often be processed or events that are stuck in PRs
+
 | Event  | Description  |
 | ----- | ----- |
-|`BoxCombatEvent`  | Called when one player damages another player, carries the damage event  |
-|`BoxJumpEvent`  | Triggered when a player jumps  |
-|`BoxPlayerItemEvent`  | A currently not 100% complete event monitoring items in the player inventory  |
-|`BoxSneakEvent`  | Triggered when the player starts sneaking  |
-|`BoxSprintEvent`  | Triggered when a player starts sprinting  |
-|`BoxZoneEvent`  | Event from the zone module, giving information on what zones the player entered/left  |
+| `BoxCombatEvent`  | Called when one player damages another player, carries the damage event  |
+| `BoxJumpEvent`  | Triggered when a player jumps  |
+| `BoxPlayerItemEvent`  | A currently not 100% complete event monitoring items in the player inventory  |
+| `BoxSneakEvent`  | Triggered when the player starts sneaking  |
+| `BoxSprintEvent`  | Triggered when a player starts sprinting  |
+| `BoxZoneEvent`  | Event from the zone module, giving information on what zones the player entered/left  |
 
 ### BoxItems
 
