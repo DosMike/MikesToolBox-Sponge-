@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockState;
@@ -98,12 +99,13 @@ public class MultiRangeZone implements Zone {
 	private Map<Class<?>, Collection<EventManipulator<?>>> manipulators = new HashMap<>();
 	@SuppressWarnings("unchecked")
 	public <E extends Event> Collection<EventManipulator<E>> getEventManipulators(Class<E> event) {
-		List<EventManipulator<E>> collected = new LinkedList<>();
-		manipulators.entrySet().stream()
+//		List<EventManipulator<E>> collected = new LinkedList<>();
+		return manipulators.entrySet().stream()
 				.filter(e->e.getKey().isAssignableFrom(event))
-				.map(Map.Entry::getValue)
-				.forEach(c->collected.addAll((Collection<? extends EventManipulator<E>>) c));
-		return collected;
+				.map(e->(EventManipulator<E>)e.getValue())
+				.collect(Collectors.toList());
+//				.forEach(c->collected.addAll((Collection<? extends EventManipulator<E>>) c));
+//		return collected;
 	}
 	
 	@Override

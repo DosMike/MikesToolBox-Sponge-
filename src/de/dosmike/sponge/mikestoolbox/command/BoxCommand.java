@@ -147,6 +147,8 @@ public class BoxCommand {
 			return new ArgumentValue(GenericArguments.user(Text.of(key)), permission);
 		case "userorsource":
 			return new ArgumentValue(GenericArguments.userOrSource(Text.of(key)), permission);
+		case "uuid":
+			return new ArgumentValue(GenericArguments.uuid(Text.of(key)), permission);
 		case "vector":
 			return new ArgumentValue(GenericArguments.vector3d(Text.of(key)), permission);
 		case "world":
