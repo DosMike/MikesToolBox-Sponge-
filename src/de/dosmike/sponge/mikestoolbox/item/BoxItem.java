@@ -85,13 +85,15 @@ public class BoxItem {
 	private Map<Class<?>, Collection<EventManipulator<?>>> manipulators = new HashMap<>();
 	@SuppressWarnings("unchecked")
 	public <E extends Event> Collection<EventManipulator<E>> getEventManipulators(Class<E> event) {
-		//List<EventManipulator<E>> collected = new LinkedList<>();
-		return manipulators.entrySet().stream()
-				.filter(e->e.getKey().isAssignableFrom(event))
-				.map(e->(EventManipulator<E>)e.getValue())
-				.collect(Collectors.toList());
-//				.forEach(c->collected.addAll((Collection<? extends EventManipulator<E>>) c));
-//		return collected;
+		List<EventManipulator<E>> collected = new LinkedList<>();
+		for (Entry<Class<?>, Collection<EventManipulator<?>>> e : manipulators.entrySet()) {
+			if (e.getKey().isAssignableFrom(event)) {
+				Collection<EventManipulator<?>> c = e.getValue();
+				for (EventManipulator<?> m : c)
+					collected.add((EventManipulator<E>)m);
+			}
+		}
+		return collected;
 	}
 	
 	public static class Builder {

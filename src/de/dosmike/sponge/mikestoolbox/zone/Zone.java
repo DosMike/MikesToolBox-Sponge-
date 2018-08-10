@@ -61,7 +61,7 @@ public interface Zone extends Comparable<Zone> {
 	Optional<Location<World>> eject(Entity e, Vector3d direction);
 	
 	/** this method is meant to visually display a zone by tracing the outlines with <b>inactive</b>, 
-	 * if the highlight entity is <i>outside</i> the zone; and <b>active</b> and <b>targetRange</b> if highlight is <i>inside<i> the zone.
+	 * if the highlight entity is <i>outside</i> the zone; and <b>active</b> and <b>targetRange</b> if highlight is <i>inside</i> the zone.
 	 * where the primary range uses <b>targetRange</b> and other ranges that are part of the active zone use <b>active</b>.*/
 	void trace(Viewer v, Entity highlight, BoxTracer inactive, BoxTracer active, BoxTracer targetRange);
 	
