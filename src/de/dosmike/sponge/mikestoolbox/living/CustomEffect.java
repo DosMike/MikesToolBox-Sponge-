@@ -8,7 +8,7 @@ import org.spongepowered.api.entity.living.Living;
 public interface CustomEffect {
 	/** the name of this wcEffect if necessary */
 	public String getName();
-	/** how long this effect will stay active in seconds. a duration <= 0 will be permanent.<br><br>
+	/** how long this effect will stay active in seconds. a duration &lt;= 0 will be permanent.<br><br>
 	 * default implementation returns 0. */
 	default public double getDuration() {
 		return 0;

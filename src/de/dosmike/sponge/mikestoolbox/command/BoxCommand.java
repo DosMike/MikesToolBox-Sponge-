@@ -20,13 +20,12 @@ import de.dosmike.sponge.mikestoolbox.exception.ArgumentBuilderException;
 /** Command toolbox to more easily bild args from a description string */
 public class BoxCommand {
 	/** Use like this: <pre>BoxCommand.registerCommand(
-	 *     "sendMessage &lt;Player> &lt;Message{RemainingString}>",
+	 *     "sendMessage &lt;Player&gt; &lt;Message{RemainingString}&gt;",
 	 *     "plugin.group.permission", 
-	 *     (src, args)->{});</pre>
+	 *     (src, args)-&gt;{});</pre>
 	 * @param command is the command as presented by /help including the command name itself, but not the command prefix '/'
 	 * @param permission the base permission for this command
-	 * @param executor the {@link CommandExecutor} to handle this command and arguments
-	 * @return the {@link CommandSpec.Builder} that you may use for further building */
+	 * @param executor the {@link CommandExecutor} to handle this command and arguments */
 	public static void registerCommand(String command, String permission, CommandExecutor executor) {
 		if (command.indexOf(' ')<0) {
 			Sponge.getCommandManager().register(BoxLoader.getBoxLoader(), CommandSpec.builder().permission(permission).executor(executor).build(), command);
@@ -39,9 +38,9 @@ public class BoxCommand {
 		}
 	}
 	/** Use like this: <pre>Sponge.getCommandManager().register(myPlugin, 
-	 *     BoxCommand.parseArguments("&lt;Player> &lt;Message{RemainingString}>")
+	 *     BoxCommand.parseArguments("&lt;Player&gt; &lt;Message{RemainingString}&gt;")
 	 *               .permission("plugin.group.permission")
-	 *               .executor((src, args)->{})
+	 *               .executor((src, args)-&gt;{})
 	 *               .build(),
 	 *     "sendMessage");</pre>
 	 * @param argumentString is the command as presented by /help WITHOUT the command name itself!
