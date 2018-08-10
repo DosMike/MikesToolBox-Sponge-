@@ -1,10 +1,12 @@
 # MikesToolBox-Sponge-
 Simplify stuff for sponge, mostly custom effects
 
-## Version 0.1
+## Version 1.0
 Most stuff should work
 
 This Toolbox provides most functionality via Static API Classes
+
+(Also sorry for these horrible docs, I'm rather writing code)
 
 ### BoxCommand
 
