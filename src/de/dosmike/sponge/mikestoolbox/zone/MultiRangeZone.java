@@ -231,9 +231,10 @@ public class MultiRangeZone implements Zone {
 	}
 	@Override
 	public boolean isInside(Location<?> loc) {
-		if (!ranges.iterator().next().getExtent().equals(loc.getExtent())) return false;
-		for (Range r : ranges)
-			if (r.contains(loc.getPosition())) return true;
+		for (Range r : ranges) {
+			if (loc.getExtent().equals(r.getExtent().orElse(null)) &&
+				r.contains(loc.getPosition())) return true;
+		}
 		return false;
 	}
 	@Override
