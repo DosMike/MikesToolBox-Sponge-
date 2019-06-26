@@ -103,7 +103,7 @@ public class BoxLiving {
 				Set<EffectHolder> ehs = efx.getValue();
 				Set<EffectHolder> ded = new HashSet<>();
 				for (EffectHolder eh : ehs) {
-					if (eh.fx.getClass().isAssignableFrom(effect)) {
+					if (effect.isAssignableFrom(eh.fx.getClass())) {
 						eh.fx.onRemove(eh.target);
 						ded.add(eh);
 					}
@@ -122,7 +122,7 @@ public class BoxLiving {
 			if (efx==null) return;
 			Set<EffectHolder> ded = new HashSet<>();
 			for (EffectHolder eh : efx) {
-				if (eh.fx.getClass().isAssignableFrom(effect)) {
+				if (effect.isAssignableFrom(eh.fx.getClass())) {
 					eh.fx.onRemove(eh.target);
 					ded.add(eh);
 				}

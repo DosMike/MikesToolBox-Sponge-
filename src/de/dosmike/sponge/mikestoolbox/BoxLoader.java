@@ -35,7 +35,7 @@ import de.dosmike.sponge.mikestoolbox.zone.ZoneServiceProvider;
 /** <b>This is not the Package you are looking for :)</b><br>
  * The ToolBox plugin will load modules and provide base services<br>
  * Most Tools should be accessed in a static way. */
-@Plugin(id = "dosmike_toolbbox", name = "Mike's ToolBox", version = "1.0.1")
+@Plugin(id = "dosmike_toolbbox", name = "Mike's ToolBox", version = "1.1.1")
 public class BoxLoader {
 	/** everyone needs some random in his life */
 	public static Random RNG = new Random(System.currentTimeMillis());
@@ -125,7 +125,7 @@ public class BoxLoader {
 //		assert cl != null;
 //		Enumeration<URL> e = cl.getResources(pkg.replace('.', '/'));
 //		List<Class<?>> clz = new ArrayList<>();
-//		while (e.hasMoreElements()) 
+//		while (e.hasMoreElements())
 //			clz.addAll(fc(new File(e.nextElement().getFile()), pkg));
 //		//filter modules here:
 //		clz = clz.stream().filter(claz->BoxModule.class.isAssignableFrom(claz)).collect(Collectors.toList());

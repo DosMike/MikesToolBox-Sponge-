@@ -1,6 +1,8 @@
 package de.dosmike.sponge.mikestoolbox.listener;
 
+import org.spongepowered.api.CatalogType;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.Transaction;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
@@ -15,7 +17,14 @@ import org.spongepowered.api.event.item.inventory.DropItemEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.Inventory;
+import org.spongepowered.api.item.inventory.InventoryArchetypes;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.Slot;
+import org.spongepowered.api.item.inventory.entity.MainPlayerInventory;
+import org.spongepowered.api.item.inventory.entity.PlayerInventory;
+import org.spongepowered.api.item.inventory.entity.UserInventory;
+import org.spongepowered.api.item.inventory.equipment.EquipmentInventory;
+import org.spongepowered.api.item.inventory.property.SlotIndex;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.item.inventory.transaction.SlotTransaction;
 
@@ -28,18 +37,22 @@ import de.dosmike.sponge.mikestoolbox.living.BoxLiving;
 import de.dosmike.sponge.mikestoolbox.living.BoxPlayer;
 import de.dosmike.sponge.mikestoolbox.living.CustomEffect;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public class BoxItemEventListener {
 
 	@Listener
 	public void onAnything(Event event) {
 		//to find new events / see what events are implemented
-//		if (!(event instanceof MoveEntityEvent || event instanceof ChangeStatisticEvent || 
+//		if (!(event instanceof MoveEntityEvent || event instanceof ChangeStatisticEvent ||
 //				event instanceof UnloadChunkEvent || event instanceof LoadChunkEvent ||
 //				event instanceof SaveWorldEvent || event instanceof CollideBlockEvent ||
 //				event instanceof ChannelRegistrationEvent)) {
 //			BoxLoader.l("%s: %s", event.getClass().getSimpleName(), event.getCause().toString());
 //		}
-		try {
+		try { // Item bound event handling
 			event.getCause().first(Player.class).ifPresent(player->{
 				player.getItemInHand(HandTypes.MAIN_HAND).ifPresent(item->{
 					BoxItem.fromItem(item).ifPresent(bitem->{
@@ -75,6 +88,7 @@ public class BoxItemEventListener {
 		Player holder = event.getCause().first(Player.class).orElse(null);
 		if (holder == null) return;
 
+		// TODO this broke somewhen down the line
 		//if the item was actively thrown away with the throw item away key
 		//it will add the Used Item context to the event. Throwing it away from
 		//the inventory removes it to the cursor already so we do not need 
@@ -83,7 +97,7 @@ public class BoxItemEventListener {
 		
 		EventManager manager = Sponge.getEventManager();
 		event.getDroppedItems().forEach((item)->{
-			//BoxLoader.l("Player dropped %d %s", item.getQuantity(), item.getType().getTranslation().get());
+			BoxLoader.l("Player dropped %d %s", item.getQuantity(), item.getType().getTranslation().get());
 			int more = 0;
 			for (Inventory slot : holder.getInventory().query(QueryOperationTypes.ITEM_STACK_IGNORE_QUANTITY.of(item.createStack())).slots())
 				more+=slot.totalItems();
@@ -93,18 +107,39 @@ public class BoxItemEventListener {
 	}
 	
 	//ChangeInventoryEvent.Held
-	
-	/** this listener is responsible for multiple events tracking wether an item enters or leaves the player inventory */
+
+	private boolean isSlotPlayerInventory(Inventory eventInventory, SlotTransaction transaction) {
+		Inventory inv = eventInventory.query(QueryOperationTypes.INVENTORY_TYPE.of(UserInventory.class));
+		Integer rawSlot = transaction.getSlot().getProperty(SlotIndex.class, "slotindex").map(SlotIndex::getValue).orElse(-1);
+		if (inv.capacity() > 0) { //is present -> is user inventory (opened with inventory key)
+			return rawSlot > 4; // 2x2 Crafting Grid and result are slots 0 through 4, ignore
+		} else { //other inventories
+			//this is where things get f-ed up:
+			//since we can't query for the player inventory in non-UserInventories
+			//I'll just ask if the slot is one of the last 36 slots (Main grid + hot bar)
+			// THIS MIGHT NOT BE CORRECT FOR MODDED INVENTORIES
+			// but it's the best i can figure out
+			int maxSlot = eventInventory.capacity()-1;
+			return maxSlot > 0 && rawSlot > (maxSlot-36);
+		}
+	}
+
+	/** this listener is responsible for multiple events tracking wether an item enters or leaves the player inventory
+	 * NOTE: dropping an item from the crafting grid may not produce events! */
 	@Listener
 	public void ItemMoveListener(ChangeInventoryEvent event) {
 		EventManager manager = Sponge.getEventManager();
 		event.getCause().first(Player.class).ifPresent(holder->{
+
 			if (event instanceof ChangeInventoryEvent.Pickup || event instanceof ClickInventoryEvent) {
-				if (event.getTransactions().size()>2) {
+				boolean isClickEvent = event instanceof ClickInventoryEvent;
+				if (event.getTransactions().size()>2 && !isClickEvent) {
 					BoxLoader.w("Error while processing inventory event! A unusual amount of %d SlotTransactions was detected", event.getTransactions().size());
 					return;
 				}
 				for (SlotTransaction transaction : event.getTransactions()) {
+					if (isClickEvent && !isSlotPlayerInventory(event.getTargetInventory(), transaction))
+						continue; //ignore non-player inv clicks
 					ItemStack toInv = transaction.getFinal().createStack();
 					ItemStack fromInv = transaction.getOriginal().createStack();
 					
