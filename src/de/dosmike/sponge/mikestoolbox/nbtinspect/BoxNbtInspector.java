@@ -1,11 +1,8 @@
 package de.dosmike.sponge.mikestoolbox.nbtinspect;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-
+import de.dosmike.sponge.mikestoolbox.BoxModule;
+import de.dosmike.sponge.mikestoolbox.command.BoxCommand;
+import de.dosmike.sponge.mikestoolbox.item.BoxItem;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.data.DataContainer;
@@ -24,13 +21,14 @@ import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.text.format.TextColors;
 
-import de.dosmike.sponge.mikestoolbox.BoxModule;
-import de.dosmike.sponge.mikestoolbox.BoxModuleRegistration;
-import de.dosmike.sponge.mikestoolbox.command.BoxCommand;
-import de.dosmike.sponge.mikestoolbox.item.BoxItem;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 
 public class BoxNbtInspector implements BoxModule {
-	BoxItem nbtClickItem = BoxItem.builder(ItemStack.builder()
+	static BoxItem nbtClickItem = BoxItem.builder(ItemStack.builder()
 				.itemType(ItemTypes.NAME_TAG)
 				.add(Keys.DISPLAY_NAME, Text.of("Click to inspect NBT"))
 				.build()
@@ -52,9 +50,10 @@ public class BoxNbtInspector implements BoxModule {
 				}
 			})
 			.build();
-	
-	@BoxModuleRegistration
-	public void onInit() {
+
+	private static boolean singleCall = true;
+	public static void prepareToolbox() {
+		if (!singleCall) return; singleCall = false;
 //		BoxLoader.l("Registering /nbt");
 		BoxCommand.registerCommand("/nbt -h", "mtb.nbt.inspect", (src,args)->{
 			if (!(src instanceof Player)) throw new CommandException(Text.of("Player only"));
@@ -71,10 +70,10 @@ public class BoxNbtInspector implements BoxModule {
 		});
 	}
 	
-	public void showInspector(MessageReceiver viewer, DataContainer container) {
+	public static void showInspector(MessageReceiver viewer, DataContainer container) {
 		showInspector(viewer, container, DataQuery.of());
 	}
-	private void showInspector(MessageReceiver viewer, DataView container, DataQuery path) {
+	private static void showInspector(MessageReceiver viewer, DataView container, DataQuery path) {
 		Map<DataQuery, Object> entries = container.getView(path).get().getValues(false);
 		Text headline;
 		{
@@ -143,7 +142,7 @@ public class BoxNbtInspector implements BoxModule {
 		.build()
 		.sendTo(viewer);
 	}
-	private void showInspector(MessageReceiver viewer, List<?> elements, DataView parent, DataQuery path) {
+	private static void showInspector(MessageReceiver viewer, List<?> elements, DataView parent, DataQuery path) {
 		Text headline;
 		{
 			List<String> pp = path.getParts();

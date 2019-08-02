@@ -1,11 +1,8 @@
 package de.dosmike.sponge.mikestoolbox.zone;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.effect.Viewer;
 import org.spongepowered.api.entity.living.Living;
@@ -17,6 +14,8 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.chat.ChatTypes;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.Color;
+import org.spongepowered.api.util.blockray.BlockRay;
+import org.spongepowered.api.util.blockray.BlockRayHit;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -92,7 +91,7 @@ public class ZoneItems {
 					.build()
 					, "boxItem:zoneSelector"
 				)
-				.addPassives(wandEfx)
+				.addActives(wandEfx)
 				.addManipulator(InteractBlockEvent.class, (event, boxItem, itemStack)->{
 					Player p = event.getCause().first(Player.class).orElse(null);
 					if (p == null) return;

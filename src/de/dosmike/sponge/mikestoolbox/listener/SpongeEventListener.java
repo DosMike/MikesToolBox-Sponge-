@@ -1,8 +1,11 @@
 package de.dosmike.sponge.mikestoolbox.listener;
 
+import java.util.HashSet;
 import java.util.Optional;
 
+import de.dosmike.sponge.mikestoolbox.living.GravityDamageModifier;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
 import org.spongepowered.api.entity.Entity;
@@ -11,6 +14,8 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
+import org.spongepowered.api.event.cause.entity.damage.DamageTypes;
+import org.spongepowered.api.event.cause.entity.damage.source.DamageSource;
 import org.spongepowered.api.event.cause.entity.damage.source.EntityDamageSource;
 import org.spongepowered.api.event.data.ChangeDataHolderEvent;
 import org.spongepowered.api.event.entity.DamageEntityEvent;
@@ -34,7 +39,6 @@ public class SpongeEventListener {
 	@Listener
 	public void onDamageEntity(DamageEntityEvent event) {
 		//prepare interesting event data: attacker, target
-		
 		if (event.isCancelled()) return;
 		if (!(event.getTargetEntity() instanceof Living)) return;
 		Living target = (Living)event.getTargetEntity();
@@ -50,14 +54,30 @@ public class SpongeEventListener {
 		
 		BoxCombatEvent boxevent = new BoxCombatEvent(event, (Living) attacker, target);
 		if (Sponge.getEventManager().post(boxevent)) event.setCancelled(true);
-		
-//		if (source.get().getType().equals(DamageTypes.FALL)) {
-//			GravityDamageModifier mod = new GravityDamageModifier(target);
-//			target.offer(Keys.FALL_DISTANCE, (float)(target.get(Keys.FALL_DISTANCE).orElse(0f)*mod.getGravity()));
-//			event.addDamageModifierBefore(mod, damage->damage*Math.abs(mod.getGravity()), new HashSet<>());
-//		}
 	}
-	
+
+	@Listener
+	public void onFallDamage(DamageEntityEvent event) {
+		Entity target = event.getTargetEntity();
+		Object s = event.getSource();
+		if ((s instanceof DamageSource) && (target instanceof Living)) {
+			DamageSource source = (DamageSource)s;
+			if (source.getType().equals(DamageTypes.FALL)) {
+				double gravity = BoxLiving.getGravity(target);
+				if (gravity != 1.0) {
+					float fd = (float) (target.get(Keys.FALL_DISTANCE).orElse(0f) * gravity);
+					target.offer(Keys.FALL_DISTANCE, fd); //fix falldistance
+					float damage = fd - 3f;
+					if (damage <= 0) {
+						event.setCancelled(true);
+					} else {
+						event.setBaseDamage(damage);
+					}
+				}
+			}
+		}
+	}
+
 	@Listener
 	public void onPlayerPart(ClientConnectionEvent.Disconnect event) {
 		BoxLiving.removeCustomEffect(event.getTargetEntity(), CustomEffect.class);
