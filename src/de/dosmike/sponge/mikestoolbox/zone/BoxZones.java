@@ -1,8 +1,13 @@
 package de.dosmike.sponge.mikestoolbox.zone;
 
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.common.reflect.TypeToken;
+import de.dosmike.sponge.mikestoolbox.BoxLoader;
+import de.dosmike.sponge.mikestoolbox.BoxModule;
+import de.dosmike.sponge.mikestoolbox.command.BoxCommand;
+import ninja.leaping.configurate.ConfigurationOptions;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
+import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Event;
@@ -13,16 +18,8 @@ import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.chat.ChatTypes;
 import org.spongepowered.api.text.format.TextColors;
 
-import com.google.common.reflect.TypeToken;
-
-import de.dosmike.sponge.mikestoolbox.BoxLoader;
-import de.dosmike.sponge.mikestoolbox.BoxModule;
-import de.dosmike.sponge.mikestoolbox.BoxModuleRegistration;
-import de.dosmike.sponge.mikestoolbox.command.BoxCommand;
-import ninja.leaping.configurate.ConfigurationOptions;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializer;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
+import java.util.LinkedList;
+import java.util.List;
 
 public class BoxZones implements BoxModule {
 	
@@ -48,9 +45,10 @@ public class BoxZones implements BoxModule {
 	public static interface EventManipulator<E extends Event> {
 		void manipulate(E event, Zone zone);
 	}
-	
-	@BoxModuleRegistration
-	public void prepareToolbox() {
+
+	private static boolean singleCall = true;
+	public static void prepareToolbox() {
+		if (!singleCall) return; singleCall = false;
 		BoxCommand.registerCommand("/zone", "toolbox.zone.cmd.give.wand", (src, args)->{
 			if (src instanceof Player) {
 				Player player = (Player) src;

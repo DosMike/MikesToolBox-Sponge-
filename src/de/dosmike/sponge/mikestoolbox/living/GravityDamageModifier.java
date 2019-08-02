@@ -13,10 +13,10 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 public class GravityDamageModifier implements DamageModifier {
 
 	private final Cause cause = Sponge.getCauseStackManager().getCurrentCause();
-	private final double gravity;
+	private final Living target;
 	
 	public GravityDamageModifier(Living forLiving) {
-		gravity = BoxLiving.getGravity(forLiving);
+		this.target = forLiving;
 	}
 	
 	@Override
@@ -35,7 +35,7 @@ public class GravityDamageModifier implements DamageModifier {
 	}
 	
 	public double getGravity() {
-		return gravity;
+		return BoxLiving.getGravity(target);
 	}
 	
 }

@@ -76,7 +76,7 @@ public class BoxItem {
 	//ending on putting away/dropping
 	private Set<CustomEffect> activeEffects = new HashSet<>();
 	public Collection<CustomEffect> getActives() {
-		return passiveEffects;
+		return activeEffects;
 	}
 	
 	//list of event manipulators, when an event is called

@@ -9,11 +9,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import de.dosmike.sponge.mikestoolbox.BoxLoader;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataQuery;
 import org.spongepowered.api.data.DataView;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.Living;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -46,7 +49,7 @@ public class BoxLiving {
 	public static void addCustomEffect(Living living, CustomEffect effect, boolean noRecast) {
 		synchronized(activeCustomEffects) {
 			UUID at = living.getUniqueId();
-			Set<EffectHolder> fxs = activeCustomEffects.containsKey(at)?activeCustomEffects.get(at):new HashSet<EffectHolder>();
+			Set<EffectHolder> fxs = activeCustomEffects.containsKey(at)?activeCustomEffects.get(at):new HashSet<>();
 			Set<EffectHolder> rem = new HashSet<>();
 			for (EffectHolder fx : fxs) {
 				if (fx.fx.getClass().equals(effect.getClass())) {
@@ -57,12 +60,12 @@ public class BoxLiving {
 				}
 			}
 			fxs.removeAll(rem);
-			
+
 			effect.onApply(living);
 			if (effect.isInstant()) return;
-			
+
 			fxs.add(new EffectHolder(effect, living));
-			
+
 			activeCustomEffects.put(at, fxs);
 		}
 	}
@@ -103,7 +106,7 @@ public class BoxLiving {
 				Set<EffectHolder> ehs = efx.getValue();
 				Set<EffectHolder> ded = new HashSet<>();
 				for (EffectHolder eh : ehs) {
-					if (eh.fx.getClass().isAssignableFrom(effect)) {
+					if (effect.isAssignableFrom(eh.fx.getClass())) {
 						eh.fx.onRemove(eh.target);
 						ded.add(eh);
 					}
@@ -122,7 +125,7 @@ public class BoxLiving {
 			if (efx==null) return;
 			Set<EffectHolder> ded = new HashSet<>();
 			for (EffectHolder eh : efx) {
-				if (eh.fx.getClass().isAssignableFrom(effect)) {
+				if (effect.isAssignableFrom(eh.fx.getClass())) {
 					eh.fx.onRemove(eh.target);
 					ded.add(eh);
 				}
@@ -157,143 +160,64 @@ public class BoxLiving {
 
 	
 	public static void setGravity(Entity entity, double gravity) {
-		throw new IllegalAccessError("The method \"setGravity\" is not yet available");
-//		if (gravity == 1) {
-//			gravityModifiers.remove(entity.getUniqueId());
-//			entity.offer(Keys.HAS_GRAVITY, true);
-//		} else if (gravity == 0) {
-//			gravityModifiers.put(entity.getUniqueId(), gravity);
-//			entity.offer(Keys.HAS_GRAVITY, false);
-//		} else {
-//			gravityModifiers.put(entity.getUniqueId(), gravity);
-//			entity.offer(Keys.HAS_GRAVITY, true);
-//		}
+//		throw new IllegalAccessError("The method \"setGravity\" is not yet available");
+		if (gravity == 1) {
+			gravityModifiers.remove(entity.getUniqueId());
+			entity.offer(Keys.HAS_GRAVITY, true);
+		} else if (gravity == 0) {
+			gravityModifiers.put(entity.getUniqueId(), gravity);
+			entity.offer(Keys.HAS_GRAVITY, false);
+		} else {
+			gravityModifiers.put(entity.getUniqueId(), gravity);
+			entity.offer(Keys.HAS_GRAVITY, true);
+		}
 	}
 	public static double getGravity(Entity entity) {
-		Double v = gravityModifiers.get(entity.getUniqueId());
-		if (v == null) return 1.0;
-		return v;
+		return 2;
+//		return gravityModifiers.getOrDefault(entity.getUniqueId(), 1d);
 	}
 	protected static Map<UUID, Double> gravityModifiers = new HashMap<>();
 	protected static Map<UUID, Vector3d> velocities = new HashMap<>();
     protected static Map<UUID, Location<World>> positions = new HashMap<>();
     protected static Map<UUID, Boolean> onGround = new HashMap<>();
 	public static void tickGravity() {
-//		for (World world : Sponge.getServer().getWorlds()) {
-//            for (Entity e : world.getEntities()) {
-//                tickGravity(e);
-//            }
-//        }
-	}
-//	public static void tickGravitySethbling(Entity ent) {
-//		Vector3d newv = ent.getVelocity();
-//        UUID uuid = ent.getUniqueId();
-//        if (gravityModifiers.containsKey(uuid) && velocities.containsKey(uuid) && onGround.containsKey(uuid) && (!ent.isOnGround() /*<- works meh*/ || Math.abs(newv.getY()) > 0.000001) && !ent.getVehicle().isPresent()) {
-//            Vector3d oldv = velocities.get(uuid);
-//            double gravity = gravityModifiers.get(uuid);
-//            if (!onGround.get(uuid)) {
-//                Vector3d d = oldv.sub(newv);
-//                
-//                double dy = d.getY();
-//                if (dy > 0.0 && (newv.getY() < -0.01 || newv.getY() > 0.01)) {
-//                    boolean oldzchanged;
-//                    boolean oldxchanged;
-//                    double nx, ny, nz;
-//                    
-//                    ny = oldv.getY() - dy * gravity;
-//                    boolean newxchanged = newv.getX() < -0.001 || newv.getX() > 0.001;
-//                    oldxchanged = oldv.getX() < -0.001 || oldv.getX() > 0.001;
-//                    nx = (newxchanged && oldxchanged) ? oldv.getX() : newv.getX();
-//                    boolean newzchanged = newv.getZ() < -0.001 || newv.getZ() > 0.001;
-//                    oldzchanged = oldv.getZ() < -0.001 || oldv.getZ() > 0.001;
-//                    nz = (newzchanged && oldzchanged) ? oldv.getZ() : newv.getZ();
-//                    newv = new Vector3d(nx, ny, nz);
-//                    ent.setVelocity(newv);
-//                }
-//            } else if (ent instanceof Player && positions.containsKey(uuid)) {
-//                Vector3d pos = ent.getLocation().getPosition();
-//                Vector3d oldpos = positions.get(uuid).getPosition();
-//                Vector3d velocity = pos.sub(oldpos);
-//                newv = new Vector3d(velocity.getX(), newv.getY(), velocity.getZ());
-//            }
-//            ent.setVelocity(newv);
-//        }
-//        velocities.put(uuid, newv);
-//        onGround.put(uuid, ent.isOnGround());
-//        positions.put(uuid, ent.getLocation());
-//	}
-	public static void tickGravity(Entity ent) {
-		Vector3d newv = ent.getVelocity();
-        UUID uuid = ent.getUniqueId();
-        
-        if (gravityModifiers.containsKey(uuid) && velocities.containsKey(uuid) && !ent.isOnGround() && !ent.getVehicle().isPresent()) {
-	        Vector3d oldv = velocities.get(uuid);
-	        Vector3d d = newv.sub(oldv);
-	        
-	        double gravity = gravityModifiers.get(uuid); //multiplied with scheduled delta time in seconds
-	        
-	        double dy = d.getY();
-	        if (Math.abs(dy)>0.01) {
-	        	newv = new Vector3d(newv.getX(), oldv.getY()+dy*gravity, newv.getZ());
-	        	ent.setVelocity(newv);
-	        }
-        }
-        velocities.put(uuid, newv);
-        
-//        if (gravityModifiers.containsKey(uuid) && velocities.containsKey(uuid) && onGround.containsKey(uuid) && (!ent.isOnGround() /*<- works meh*/ || Math.abs(newv.getY()) > 0.000001) && !ent.getVehicle().isPresent()) {
-//            Vector3d oldv = velocities.get(uuid);
-//            double gravity = gravityModifiers.get(uuid);
-//            if (!onGround.get(uuid)) {
-//                Vector3d d = oldv.sub(newv);
-//                
-//                double dy = d.getY();
-//                if (dy > 0.0) {
-//                    newv = new Vector3d(newv.getX(), oldv.getY()-dy*gravity, newv.getZ());
-//                    ent.setVelocity(newv);
-//                }
-//            } else if (ent instanceof Player && positions.containsKey(uuid)) {
-//                Vector3d pos = ent.getLocation().getPosition();
-//                Vector3d oldpos = positions.get(uuid).getPosition();
-//                Vector3d velocity = pos.sub(oldpos);
-//                newv = new Vector3d(velocity.getX(), newv.getY(), velocity.getZ());
-//                ent.setVelocity(newv);
-//            }
-//        }
-//        velocities.put(uuid, newv);
-//        onGround.put(uuid, ent.isOnGround() && Math.abs(newv.getY()) < 0.000001);
-//        positions.put(uuid, ent.getLocation());
-	}
-	
-	/* Thanks to Yeregorix
-	public boolean updateMotion() {
-        double g = updateGravity();
-        if (g != 1) {
-            double dMotionX = this.motionX - this.prevMotionX, dMotionY = this.motionY - this.prevMotionY, dMotionZ = this.motionZ - this.prevMotionZ;
-           
-            if (g <= 0.5)
-                this.fallDistance = 0;
-           
-            if (g > 0) {
-                if (dMotionY < 0) {
-                    this.motionX = this.prevMotionX + (dMotionX * g);
-                    this.motionY = this.prevMotionY + (dMotionY * g);
-                    this.motionZ = this.prevMotionZ + (dMotionZ * g);
-                    return true;
-                }
-            } else {
-                if (dMotionY < 0) {
-                    this.motionX = this.prevMotionX + (dMotionX * -g);
-                    this.motionY = this.prevMotionY + (dMotionY * g);
-                    this.motionZ = this.prevMotionZ + (dMotionZ * -g);
- 
-                    if (this.motionY > 2)
-                        this.motionY = 2;
-                } else {
-                    this.motionY = -g * 0.01;
-                }
-                return true;
+		for (World world : Sponge.getServer().getWorlds()) {
+            for (Entity e : world.getEntities()) {
+                tickGravity(e);
             }
         }
-        return false;
-    }*/
+	}
+	//loosely based on bling-gravity by sethbling
+	public static void tickGravity(Entity ent) {
+		Location<World> pre = positions.getOrDefault(ent.getUniqueId(), ent.getLocation());
+
+		Vector3d nvel = ent.getVelocity();
+		Vector3d ovel = velocities.getOrDefault(ent.getUniqueId(), new Vector3d(0, 0, 0));
+
+		boolean nground = ent.isOnGround();
+		boolean oground = onGround.getOrDefault(ent.getUniqueId(), false);
+
+		boolean oldDX = ovel.getX() < -0.001 || ovel.getX() > 0.001;
+		boolean oldDY = ovel.getY() < -0.01 || ovel.getY() > 0.01;
+		boolean oldDZ = ovel.getZ() < -0.001 || ovel.getZ() > 0.001;
+		boolean newDX = nvel.getX() < -0.001 || nvel.getX() > 0.001;
+		boolean newDY = nvel.getY() < -0.01 || nvel.getY() > 0.01;
+		boolean newDZ = nvel.getZ() < -0.001 || nvel.getZ() > 0.001;
+
+		double dy = ovel.getY()-nvel.getY();
+		if (dy < 0) dy=-dy; // drag has to be positive
+
+		if (!oground && !nground && (oldDY && newDY && dy > 0.01)) { //prevent getting stuck in a direction when velocity is low
+			nvel = new Vector3d(
+					oldDX && !newDX ? ovel.getX() : nvel.getX(),
+					ovel.getY() - dy * Math.sqrt(getGravity(ent)),
+					oldDZ && !newDZ ? ovel.getZ() : nvel.getZ()
+			);
+			ent.setVelocity(nvel);
+		}
+
+		onGround.put(ent.getUniqueId(), nground);
+		velocities.put(ent.getUniqueId(), nvel);
+		positions.put(ent.getUniqueId(), ent.getLocation());
+	}
 }
