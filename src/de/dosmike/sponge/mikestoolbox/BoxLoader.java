@@ -41,7 +41,7 @@ import org.spongepowered.api.scheduler.Task;
 /** <b>This is not the Package you are looking for :)</b><br>
  * The ToolBox plugin will load modules and provide base services<br>
  * Most Tools should be accessed in a static way. */
-@Plugin(id = "dosmike_toolbbox", name = "Mike's ToolBox", version = "1.2")
+@Plugin(id = "dosmike_toolbbox", name = "Mike's ToolBox", version = "1.2.1")
 public class BoxLoader {
 	/** everyone needs some random in his life */
 	public static Random RNG = new Random(System.currentTimeMillis());

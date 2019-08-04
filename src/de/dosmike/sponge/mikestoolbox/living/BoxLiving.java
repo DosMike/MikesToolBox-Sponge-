@@ -173,8 +173,8 @@ public class BoxLiving {
 		}
 	}
 	public static double getGravity(Entity entity) {
-		return 2;
-//		return gravityModifiers.getOrDefault(entity.getUniqueId(), 1d);
+//		return 2;
+		return gravityModifiers.getOrDefault(entity.getUniqueId(), 1d);
 	}
 	protected static Map<UUID, Double> gravityModifiers = new HashMap<>();
 	protected static Map<UUID, Vector3d> velocities = new HashMap<>();
@@ -189,6 +189,9 @@ public class BoxLiving {
 	}
 	//loosely based on bling-gravity by sethbling
 	public static void tickGravity(Entity ent) {
+		double gravity = getGravity(ent);
+		if (gravity == 1d) return;
+
 		Location<World> pre = positions.getOrDefault(ent.getUniqueId(), ent.getLocation());
 
 		Vector3d nvel = ent.getVelocity();
@@ -210,7 +213,7 @@ public class BoxLiving {
 		if (!oground && !nground && (oldDY && newDY && dy > 0.01)) { //prevent getting stuck in a direction when velocity is low
 			nvel = new Vector3d(
 					oldDX && !newDX ? ovel.getX() : nvel.getX(),
-					ovel.getY() - dy * Math.sqrt(getGravity(ent)),
+					ovel.getY() - dy * Math.sqrt(gravity),
 					oldDZ && !newDZ ? ovel.getZ() : nvel.getZ()
 			);
 			ent.setVelocity(nvel);
