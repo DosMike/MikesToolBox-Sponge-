@@ -2,7 +2,7 @@
 
 **Welcome to my Sponge-Army Knife, A toolbox with a bit of everything for everyone!**
 
-## Version 1.2 for Minecraft 1.12.2
+## Version 1.2.2 for Minecraft 1.12.2
 
 This Toolbox provides most functionality via Static API Classes
 
@@ -83,6 +83,14 @@ There is also an event for when a Player enters or leaves such an area.
 Zones can easily be **created ingame** with the //zone tool: left-click for corner 1, right-click for corner 2, second right-click to create the zone or instead shift-right-click to create a **zone of multiple areas**
 
 While holding the zone tool all zones get **highlighted** you you know where every zone is.
+
+### External Connections
+
+**[Version Checker](https://github.com/DosMike/SpongePluginVersionChecker)**  
+This plugin uses a version checker to notify you about available updates.  
+This updater is **disabled by default** and can be enabled in `config/dosmike_toolbbox/versionchecker.conf`.  
+If enabled it will asynchronously check (once per server start) if the Ore repository has any updates.  
+This will *only print update notes into the server log*, no files are being downlaoded!
 
 ### Need Help?
 #### [Join my Discord](https://discord.gg/E592Gdu)
