@@ -1,0 +1,9 @@
+[{
+    "modid": "dosmike_toolbbox",
+    "name": "Mike's ToolBox",
+    "version": "1.2.2",
+    "description": "Simplify lots of things because I can",
+    "authorList": [ "DosMike" ],
+	"requiredMods": [ "spongeapi@[7.0.0,)" ],
+    "dependencies": [ "spongeapi@[7.0.0,)" ]
+}]
