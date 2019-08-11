@@ -85,7 +85,7 @@ public class BoxLoader {
 		container = Sponge.getPluginManager().fromInstance(this).get();
 
 		loadModules();
-		
+
 		Sponge.getEventManager().registerListeners(BoxLoader.getBoxLoader(), new BoxItemEventListener());
 		syncExecutor =
 		Sponge.getScheduler().createSyncExecutor(this);
