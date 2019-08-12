@@ -83,16 +83,18 @@ task uberJar(type:ShadowJar, group:'_Plugin', dependsOn:removeOldVersions) {
     classifier = null
 }
 task pushToServer(type: Copy, group:'_Plugin', dependsOn:uberJar) {
-    assert new File(serverDir).exists()
-    from './build/libs'
-    into file("${serverDir}/mods")
-    include '*.jar'
+    if (new File(serverDir).exists()) {
+        from './build/libs'
+        into file("${serverDir}/mods")
+        include '*.jar'
+    }
 }
 task _runServer(type: Exec,group:'_Plugin', dependsOn:pushToServer) {
-    assert new File(serverDir).exists()
-    workingDir file(serverDir)
-    //double cmd to detach from ide terminal
-    commandLine 'cmd', '/c', 'start', 'cmd', '/c', 'startServer.bat'
+    if (new File(serverDir).exists()) {
+        workingDir file(serverDir)
+        //double cmd to detach from ide terminal
+        commandLine 'cmd', '/c', 'start', 'cmd', '/c', 'startServer.bat'
+    }
 }
 task rebuild(group:'_Plugin') {
     dependsOn clean
@@ -111,14 +113,15 @@ jar {
 //i tried the singing plugin but the config described on the gradle page did not work
 //so here's the easy way of signing a plugin without having to get the keyId
 task signing(type:Exec, group:'_Plugin', dependsOn:uberJar) {
-    assert new File(gnupgDir).exists()
-    workingDir file(gnupgDir)
-    commandLine 'cmd', '/c', 'gpg2', '--output', "${baseArtifactFile}.sig", '--detach-sig', baseArtifactFile
-    //store the output instead of printing to the console:
-    standardOutput = new ByteArrayOutputStream()
-    //extension method stopTomcat.output() can be used to obtain the output:
-    ext.output = {
-        return standardOutput.toString()
+    if (new File(gnupgDir).exists()) {
+        workingDir file(gnupgDir)
+        commandLine 'cmd', '/c', 'gpg2', '--output', "${baseArtifactFile}.sig", '--detach-sig', baseArtifactFile
+        //store the output instead of printing to the console:
+        standardOutput = new ByteArrayOutputStream()
+        //extension method stopTomcat.output() can be used to obtain the output:
+        ext.output = {
+            return standardOutput.toString()
+        }
     }
 }
 
