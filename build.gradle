@@ -142,7 +142,7 @@ install {
             licenses {
                 license {
                     name 'MIT License'
-                    url 'https://github.com/DosMike/MegaMenus/blob/master/LICENSE'
+                    url 'https://github.com/DosMike/MikesToolBox-Sponge-/blob/master/LICENSE'
                     distribution 'repo'
                 }
             }
