@@ -56,7 +56,7 @@ task removeOldVersions() {
         it.file.name ==~ artifactNamePattern &&
                 it.file.name != baseArtifactName
     }
-    if (serverDir.exists())
+    if (file(serverDir).exists())
         delete fileTree("${serverDir}/mods").include {
             it.file.name ==~ artifactNamePattern &&
                     it.file.name != baseArtifactName
@@ -83,14 +83,14 @@ task uberJar(type:ShadowJar, group:'_Plugin', dependsOn:removeOldVersions) {
     classifier = null
 }
 task pushToServer(type: Copy, group:'_Plugin', dependsOn:uberJar) {
-    assert serverDir.exists()
+    assert file(serverDir).exists()
     from './build/libs'
-    into new File(serverDir, 'mods')
+    into file("${serverDir}/mods")
     include '*.jar'
 }
 task _runServer(type: Exec,group:'_Plugin', dependsOn:pushToServer) {
-    assert serverDir.exists()
-    workingDir serverDir
+    assert file(serverDir).exists()
+    workingDir file(serverDir)
     //double cmd to detach from ide terminal
     commandLine 'cmd', '/c', 'start', 'cmd', '/c', 'startServer.bat'
 }
@@ -111,8 +111,8 @@ jar {
 //i tried the singing plugin but the config described on the gradle page did not work
 //so here's the easy way of signing a plugin without having to get the keyId
 task signing(type:Exec, group:'_Plugin', dependsOn:uberJar) {
-    assert gnupgDir.exists()
-    workingDir gnupgDir
+    assert file(gnupgDir).exists()
+    workingDir file(gnupgDir)
     commandLine 'cmd', '/c', 'gpg2', '--output', "${baseArtifactFile}.sig", '--detach-sig', baseArtifactFile
     //store the output instead of printing to the console:
     standardOutput = new ByteArrayOutputStream()
