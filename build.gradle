@@ -11,7 +11,10 @@ group = 'com.github.dosmike'
 def jsonFile = file('src/main/resources/mcmod.info')
 def parsedJson = new groovy.json.JsonSlurper().parseText(jsonFile.text)
 def pluginid = parsedJson[0].modid
-version = parsedJson[0].version
+if (version == 'unspecified') {
+    // jitpack will inject and expect it's own version (e.g. master-SNAPSHOT)
+    version = parsedJson[0].version
+}
 assert (pluginid instanceof String) && !((String)pluginid).isEmpty()
 println rootProject.name + ' (' + pluginid + ') version ' + version
 
@@ -149,4 +152,9 @@ install {
             }
         }
     }
+}
+
+wrapper {
+    gradleVersion = "5.2.1"
+    distributionType = Wrapper.DistributionType.ALL
 }
