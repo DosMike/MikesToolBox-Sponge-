@@ -11,7 +11,10 @@ group = 'com.github.dosmike'
 def jsonFile = file('src/main/resources/mcmod.info')
 def parsedJson = new groovy.json.JsonSlurper().parseText(jsonFile.text)
 def pluginid = parsedJson[0].modid
-version = parsedJson[0].version
+if (version == 'unspecified') {
+    // jitpack will inject and expect it's own version (e.g. master-SNAPSHOT)
+    version = parsedJson[0].version
+}
 assert (pluginid instanceof String) && !((String)pluginid).isEmpty()
 println rootProject.name + ' (' + pluginid + ') version ' + version
 
@@ -21,8 +24,8 @@ def baseArtifactFile = file("./build/libs/${baseArtifactName}").toString()
 def fileNamePattern = ~'(?i)^(?!(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.[^.]*)?$)[^<>:\"/\\\\|?*\\x00-\\x1F]*[^<>:\"/\\\\|?*\\x00-\\x1F\\ .]$'
 assert baseArtifactName ==~ fileNamePattern
 
-def serverDir = file('G:/Sonstige/VanillaSponge/server')
-def gnupgDir = file('G:/Sonstige/VanillaSponge/GnuPG')
+def serverDir = 'G:/Sonstige/VanillaSponge/server'
+def gnupgDir = 'G:/Sonstige/VanillaSponge/GnuPG'
 
 sourceCompatibility = 1.8 // java 8
 targetCompatibility = 1.8
@@ -53,7 +56,7 @@ task removeOldVersions() {
         it.file.name ==~ artifactNamePattern &&
                 it.file.name != baseArtifactName
     }
-    if (serverDir.exists())
+    if (new File(serverDir).exists())
         delete fileTree("${serverDir}/mods").include {
             it.file.name ==~ artifactNamePattern &&
                     it.file.name != baseArtifactName
@@ -80,16 +83,18 @@ task uberJar(type:ShadowJar, group:'_Plugin', dependsOn:removeOldVersions) {
     classifier = null
 }
 task pushToServer(type: Copy, group:'_Plugin', dependsOn:uberJar) {
-    assert serverDir.exists()
-    from './build/libs'
-    into new File(serverDir, 'mods')
-    include '*.jar'
+    if (new File(serverDir).exists()) {
+        from './build/libs'
+        into file("${serverDir}/mods")
+        include '*.jar'
+    }
 }
 task _runServer(type: Exec,group:'_Plugin', dependsOn:pushToServer) {
-    assert serverDir.exists()
-    workingDir serverDir
-    //double cmd to detach from ide terminal
-    commandLine 'cmd', '/c', 'start', 'cmd', '/c', 'startServer.bat'
+    if (new File(serverDir).exists()) {
+        workingDir file(serverDir)
+        //double cmd to detach from ide terminal
+        commandLine 'cmd', '/c', 'start', 'cmd', '/c', 'startServer.bat'
+    }
 }
 task rebuild(group:'_Plugin') {
     dependsOn clean
@@ -108,14 +113,15 @@ jar {
 //i tried the singing plugin but the config described on the gradle page did not work
 //so here's the easy way of signing a plugin without having to get the keyId
 task signing(type:Exec, group:'_Plugin', dependsOn:uberJar) {
-    assert gnupgDir.exists()
-    workingDir gnupgDir
-    commandLine 'cmd', '/c', 'gpg2', '--output', "${baseArtifactFile}.sig", '--detach-sig', baseArtifactFile
-    //store the output instead of printing to the console:
-    standardOutput = new ByteArrayOutputStream()
-    //extension method stopTomcat.output() can be used to obtain the output:
-    ext.output = {
-        return standardOutput.toString()
+    if (new File(gnupgDir).exists()) {
+        workingDir file(gnupgDir)
+        commandLine 'cmd', '/c', 'gpg2', '--output', "${baseArtifactFile}.sig", '--detach-sig', baseArtifactFile
+        //store the output instead of printing to the console:
+        standardOutput = new ByteArrayOutputStream()
+        //extension method stopTomcat.output() can be used to obtain the output:
+        ext.output = {
+            return standardOutput.toString()
+        }
     }
 }
 
@@ -131,6 +137,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 artifacts {
+    archives uberJar
     archives sourcesJar
     archives javadocJar
 }
@@ -148,4 +155,9 @@ install {
             }
         }
     }
+}
+
+wrapper {
+    gradleVersion = "5.2.1"
+    distributionType = Wrapper.DistributionType.ALL
 }
