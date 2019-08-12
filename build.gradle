@@ -24,8 +24,8 @@ def baseArtifactFile = file("./build/libs/${baseArtifactName}").toString()
 def fileNamePattern = ~'(?i)^(?!(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.[^.]*)?$)[^<>:\"/\\\\|?*\\x00-\\x1F]*[^<>:\"/\\\\|?*\\x00-\\x1F\\ .]$'
 assert baseArtifactName ==~ fileNamePattern
 
-def serverDir = file('G:/Sonstige/VanillaSponge/server')
-def gnupgDir = file('G:/Sonstige/VanillaSponge/GnuPG')
+def serverDir = 'G:/Sonstige/VanillaSponge/server'
+def gnupgDir = 'G:/Sonstige/VanillaSponge/GnuPG'
 
 sourceCompatibility = 1.8 // java 8
 targetCompatibility = 1.8
