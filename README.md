@@ -84,6 +84,20 @@ Zones can easily be **created ingame** with the //zone tool: left-click for corn
 
 While holding the zone tool all zones get **highlighted** you you know where every zone is.
 
+### Depending on this plugin
+
+This plugin is jitpack-compatible, if you're using gradle just add this:
+```{groovy}
+repositories {
+    ...
+    maven { url "https://jitpack.io" }
+}
+dependencies {
+    ...
+    compile 'com.github.DosMike:MikesToolBox-Sponge-:master-SNAPSHOT'
+}
+```
+
 ### External Connections
 
 **[Version Checker](https://github.com/DosMike/SpongePluginVersionChecker)**  
