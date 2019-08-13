@@ -26,7 +26,7 @@ public @interface H2Column {
 	 * This will determ, how the element is restored. CONSTRUCTOR will try to call a
 	 * constructor that accepts one string argument, fromString will try to get one of
 	 * the string reconstruction methods that accepts one string agument.<br>
-	 * (Only used on Objects not Number or String and {@link @H2Column} value is AUTO) */
+	 * (Only used on Objects not Number or String and {@link H2Column} value is AUTO) */
 	AutoSQL.ReconstructionMethod method() default AutoSQL.ReconstructionMethod.NONE;
 	/** only used if method is SERIALIZER. Specifies the class to use to serialize this field into blob objects */
 	Class<? extends H2Serializer> serializer() default H2Serializer.class;
