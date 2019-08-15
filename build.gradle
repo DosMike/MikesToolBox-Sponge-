@@ -33,9 +33,9 @@ targetCompatibility = 1.8
 
 
 dependencies {
-    compile 'org.jetbrains:annotations:16.0.2'
-    compile 'org.spongepowered:spongeapi:7.2.0-SNAPSHOT'
-    shadow 'com.github.DosMike:SpongePluginVersionChecker:1.1'
+    compileOnly 'org.jetbrains:annotations:16.0.2'
+    compileOnly 'org.spongepowered:spongeapi:7.2.0-SNAPSHOT'
+    shadow 'com.github.DosMike:SpongePluginVersionChecker:master-SNAPSHOT'
 }
 
 
@@ -86,7 +86,7 @@ task pushToServer(type: Copy, group:'_Plugin', dependsOn:uberJar) {
     if (new File(serverDir).exists()) {
         from './build/libs'
         into file("${serverDir}/mods")
-        include '*.jar'
+        include baseArtifactName
     }
 }
 task _runServer(type: Exec,group:'_Plugin', dependsOn:pushToServer) {
